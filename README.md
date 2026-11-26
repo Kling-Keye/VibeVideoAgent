@@ -2,9 +2,13 @@
 
 **Closing the perceptual loop for code-driven video generation.**
 
-<!-- INTRO VIDEO: after uploading the intro MP4 through GitHub's web editor, replace the <p> block below with the generated https://github.com/user-attachments/assets/... URL on its own line. -->
+<!-- INTRO VIDEO: for an inline player, upload the intro MP4 through GitHub's web editor and replace the <p> block below with the generated https://github.com/user-attachments/assets/... URL on its own line. -->
 <p align="center">
-  <img src="assets/intro_poster.jpg" width="100%" alt="VibeVideoAgent intro video">
+  <a href="https://github.com/Kling-Keye/VibeVideoAgent/releases/download/v0.2.1/vibevideoagent_intro_720p.mp4">
+    <img src="assets/intro_poster.jpg" width="100%" alt="VibeVideoAgent intro video (click to play)">
+  </a>
+  <br>
+  <sub>▶ <a href="https://github.com/Kling-Keye/VibeVideoAgent/releases/download/v0.2.1/vibevideoagent_intro_720p.mp4">Watch the 1-minute intro video</a></sub>
 </p>
 
 VibeVideoAgent gives a coding agent eyes and ears while it writes a video. The agent turns your brief into quoted requirements, renders a small preview, checks what a viewer can actually see or hear, edits its own source, re-checks the same moment on the new render, and verifies the encoded delivery. Claude Code and Codex use the same eleven MCP tools and the same production skill, with no renderer-specific adapters: HTML/Canvas, WebGL/Three.js, React/Remotion, Python (Pillow, Cairo, Manim), SVG and FFmpeg/TTS audio pipelines all work through the same interface.
