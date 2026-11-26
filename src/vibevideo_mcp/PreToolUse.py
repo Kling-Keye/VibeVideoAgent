@@ -1,4 +1,4 @@
-"""PreToolUse for the local Claude Code and Codex paper profile (standard library only)."""
+"""PreToolUse for the local Claude Code and Codex PreToolUse profile (standard library only)."""
 
 import hashlib
 import json
@@ -60,7 +60,7 @@ def private(path, project):
 
 
 def readable(path, project):
-    # The paper profile must still be able to load its own project skill.
+    # The PreToolUse profile must still be able to load its own project skill.
     for folder in (".claude", ".agents"):
         skill = project / folder / "skills/vibevideo"
         if path in (skill / "SKILL.md", skill / "references/rendering.md"):

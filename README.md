@@ -24,13 +24,13 @@ vibevideo install codex --project /path/to/my-video
 
 The installer registers its absolute Python interpreter and workspace. Keep the environment at that location. Claude Code reads the project’s `.mcp.json` and `.claude/skills/vibevideo/SKILL.md`. Codex reads `.codex/config.toml` and `.agents/skills/vibevideo/SKILL.md`. Reinstalling identical settings is safe. If the project or interpreter moves, remove the old `vibevideo` server entry and run the installer again. Other servers can share the same config file. [Claude Code MCP](https://code.claude.com/docs/en/mcp) · [Codex MCP](https://developers.openai.com/codex/mcp/)
 
-## Paper profile with PreToolUse
+## PreToolUse profile
 
 For a production with the experimental tool restrictions, opt in per client and per video project:
 
 ```sh
-vibevideo install claude --project /path/to/my-video --profile paper
-vibevideo install codex --project /path/to/my-video --profile paper
+vibevideo install claude --project /path/to/my-video --profile PreToolUse
+vibevideo install codex --project /path/to/my-video --profile PreToolUse
 ```
 
 Restart the client in the trusted project. Review the installed hook in `/hooks`. In Codex, trust the exact **PreToolUse** definition before the first run and review it again after its command changes. Claude Code reads `.claude/settings.json`; Codex reads `.codex/hooks.json`. Verify that **PreToolUse** is enabled before collecting a run. The tool service and the profile use the same project directory. [Claude Code hooks](https://code.claude.com/docs/en/hooks) · [Codex hooks](https://developers.openai.com/codex/hooks/)

@@ -33,14 +33,14 @@ def replace_text(path, text):
 def profile_settings(path, project, profile):
     old = path.read_text("utf-8") if path.exists() else None
     data = json.loads(old) if old is not None else {}
-    if profile == "paper" and data.get("disableAllHooks"):
+    if profile == "PreToolUse" and data.get("disableAllHooks"):
         raise ValueError(f"Hooks are disabled in {path}")
     hooks = data.get("hooks", {})
     entries = hooks.get("PreToolUse", [])
     command = shlex.join([sys.executable, "-I", "-m", "vibevideo_mcp.PreToolUse", str(project)])
     rule = {"matcher": ".*", "hooks": [{"type": "command", "command": command, "timeout": 10}]}
     updated = list(entries)
-    if profile == "paper" and rule not in entries:
+    if profile == "PreToolUse" and rule not in entries:
         updated.append(rule)
     if profile == "standard":
         updated = [row for row in entries if row != rule]
@@ -85,17 +85,20 @@ def install(client, project, profile=None):
                 f"Existing vibevideo entry differs in {config}. Rename or reconcile it before installing."
             )
         old_skill = skill.read_text("utf-8") if skill.exists() else None
-        original_digest = "913efe9363d3c17dd0abed0d33a0eefb12c8b73eddc5bf4f106c711f6d0844ee"
+        bundled_skill_digests = {
+            "913efe9363d3c17dd0abed0d33a0eefb12c8b73eddc5bf4f106c711f6d0844ee",  # 0.1.0
+            "364475cf291ce8df5fbf6afe73559496259e238bd2b76a3e27371a43e52f54bb",  # 0.2.0
+        }
         if (
             old_skill is not None
             and old_skill != description
-            and hashlib.sha256(old_skill.encode()).hexdigest() != original_digest
+            and hashlib.sha256(old_skill.encode()).hexdigest() not in bundled_skill_digests
         ):
             raise ValueError(f"Existing skill differs at {skill}. Move it aside or merge your copy.")
         if guide.exists() and guide.read_text("utf-8") != rendering:
             raise ValueError(f"Existing rendering guide differs at {guide}")
         if (
-            profile == "paper"
+            profile == "PreToolUse"
             and not claude
             and any(data.get("features", {}).get(k) is False for k in ("hooks", "codex_hooks"))
         ):
@@ -134,8 +137,8 @@ def main():
     setup.add_argument("client", choices=["claude", "codex"])
     setup.add_argument(
         "--profile",
-        choices=["standard", "paper"],
-        help="Enable the paper PreToolUse hook or remove it with standard. Omit to preserve the current setting.",
+        choices=["standard", "PreToolUse"],
+        help="Enable the PreToolUse hook or remove it with standard. Omit to preserve the current setting.",
     )
     setup.add_argument("--project", type=Path, default=Path.cwd())
     subs.add_parser("doctor", help="Check local tools and perception settings without network access")

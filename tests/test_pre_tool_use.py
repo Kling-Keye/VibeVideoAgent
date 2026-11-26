@@ -1,6 +1,7 @@
 import json
 import shlex
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -20,8 +21,11 @@ class PreToolUseTests(unittest.TestCase):
                 config = project / rel
                 config.parent.mkdir()
                 config.write_text(json.dumps({"hooks": {"PreToolUse": [other]}}))
-                install(client, project, "paper")
-                install(client, project, "paper")
+                subprocess.run(
+                    [sys.executable, "-I", "-m", "vibevideo_mcp", "install", client,
+                     "--project", str(project), "--profile", "PreToolUse"], check=True, capture_output=True,
+                )
+                install(client, project, "PreToolUse")
                 rules = json.loads(config.read_text())["hooks"]["PreToolUse"]
                 self.assertEqual(rules[:-1], [other])
                 command = shlex.split(rules[-1]["hooks"][0]["command"])
