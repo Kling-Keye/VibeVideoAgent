@@ -1,0 +1,9 @@
+.venv/
+.vibevideo/
+.env
+.env.*
+__pycache__/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
