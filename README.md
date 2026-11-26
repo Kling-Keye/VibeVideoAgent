@@ -62,7 +62,7 @@ VibeVideoAgent raises every L3 dimension on all three backbones. The largest gai
 Create the virtual environment in a permanent location. The installer records the absolute interpreter path in your project config.
 
 ```sh
-git clone <this repository> vibevideo && cd vibevideo
+git clone https://github.com/Kling-Keye/VibeVideoAgent.git && cd VibeVideoAgent
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install .

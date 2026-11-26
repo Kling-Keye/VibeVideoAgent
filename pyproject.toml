@@ -27,6 +27,7 @@ classifiers = [
 ]
 
 [project.urls]
+Repository = "https://github.com/Kling-Keye/VibeVideoAgent"
 Paper = "https://arxiv.org/abs/2611.34237"
 
 [project.scripts]
