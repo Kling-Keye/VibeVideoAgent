@@ -24,6 +24,23 @@ vibevideo install codex --project /path/to/my-video
 
 The installer registers its absolute Python interpreter and workspace. Keep the environment at that location. Claude Code reads the project’s `.mcp.json` and `.claude/skills/vibevideo/SKILL.md`. Codex reads `.codex/config.toml` and `.agents/skills/vibevideo/SKILL.md`. Reinstalling identical settings is safe. If the project or interpreter moves, remove the old `vibevideo` server entry and run the installer again. Other servers can share the same config file. [Claude Code MCP](https://code.claude.com/docs/en/mcp) · [Codex MCP](https://developers.openai.com/codex/mcp/)
 
+## Paper profile with PreToolUse
+
+For a production with the experimental tool restrictions, opt in per client and per video project:
+
+```sh
+vibevideo install claude --project /path/to/my-video --profile paper
+vibevideo install codex --project /path/to/my-video --profile paper
+```
+
+Restart the client in the trusted project. Review the installed hook in `/hooks`. In Codex, trust the exact **PreToolUse** definition before the first run and review it again after its command changes. Claude Code reads `.claude/settings.json`; Codex reads `.codex/hooks.json`. Verify that **PreToolUse** is enabled before collecting a run. The tool service and the profile use the same project directory. [Claude Code hooks](https://code.claude.com/docs/en/hooks) · [Codex hooks](https://developers.openai.com/codex/hooks/)
+
+Start with `plan_production`, then call `status` with the returned task ID. This binds the validated plan to the current client session. A fresh session can resume by calling `status` with that ID. Before activation, the hook allows brief and skill reads and input inventory, and gates editing, rendering, and media operations. During production it blocks known direct media reads, image-viewing tools, subagent calls, other MCP servers, edits to protected paths through file tools, and explicit model API commands. Shell commands remain available for rendering. The audit records tool names and decisions in `.vibevideo/hooks/audit.jsonl` without logging command bodies, media, or credentials. This profile enforces tool-entry rules; filesystem isolation, resource limits and network controls depend on the host. To turn off the installed rule, rerun the installer with `--profile standard` and restart the client.
+
+## Rendering environment
+
+Install FFmpeg and the renderer your project will use before launching the client. The [rendering guide](src/vibevideo_mcp/skills/vibevideo/references/rendering.md) includes commands for FFmpeg, fonts, browser/Three.js animation, Python drawing, optional Edge TTS, and a local H.264/AAC smoke test. The installer also places the guide beside the skill in each video project.
+
 ## Make a first video
 
 In the terminal that will launch your client, supply your Gemini API key via your secret manager or enter it with the following Bash commands. Choose a native Gemini API model your account can use for video, audio, and structured output.

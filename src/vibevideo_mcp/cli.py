@@ -2,9 +2,11 @@
 
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 import shutil
+import shlex
 import sys
 import tempfile
 from importlib.resources import files
@@ -28,14 +30,37 @@ def replace_text(path, text):
         Path(name).unlink(missing_ok=True)
 
 
-def install(client, project):
+def profile_settings(path, project, profile):
+    old = path.read_text("utf-8") if path.exists() else None
+    data = json.loads(old) if old is not None else {}
+    if profile == "paper" and data.get("disableAllHooks"):
+        raise ValueError(f"Hooks are disabled in {path}")
+    hooks = data.get("hooks", {})
+    entries = hooks.get("PreToolUse", [])
+    command = shlex.join([sys.executable, "-I", "-m", "vibevideo_mcp.PreToolUse", str(project)])
+    rule = {"matcher": ".*", "hooks": [{"type": "command", "command": command, "timeout": 10}]}
+    updated = list(entries)
+    if profile == "paper" and rule not in entries:
+        updated.append(rule)
+    if profile == "standard":
+        updated = [row for row in entries if row != rule]
+    if updated == entries:
+        return None
+    data.setdefault("hooks", {})["PreToolUse"] = updated
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+
+
+def install(client, project, profile=None):
     project = project.resolve(strict=True)
     claude = client == "claude"
     config = project / (".mcp.json" if claude else ".codex/config.toml")
     skill = project / (".claude" if claude else ".agents") / "skills/vibevideo/SKILL.md"
-    if any(path.resolve() != path for path in (config, skill)):
+    hook_path = project / (".claude/settings.json" if claude else ".codex/hooks.json")
+    guide = skill.parent / "references/rendering.md"
+    if any(path.resolve() != path for path in (config, skill, guide, hook_path)):
         raise ValueError("Install paths must be regular project paths. Resolve existing symlinks first.")
     description = files("vibevideo_mcp").joinpath("skills/vibevideo/SKILL.md").read_text("utf-8")
+    rendering = files("vibevideo_mcp").joinpath("skills/vibevideo/references/rendering.md").read_text("utf-8")
     args = ["-I", "-m", "vibevideo_mcp", "serve", "--workspace", str(project)]
     entry = {"command": sys.executable, "args": args}
     if claude:
@@ -59,14 +84,33 @@ def install(client, project):
             raise ValueError(
                 f"Existing vibevideo entry differs in {config}. Rename or reconcile it before installing."
             )
-        if skill.exists() and skill.read_text("utf-8") != description:
+        old_skill = skill.read_text("utf-8") if skill.exists() else None
+        original_digest = "913efe9363d3c17dd0abed0d33a0eefb12c8b73eddc5bf4f106c711f6d0844ee"
+        if (
+            old_skill is not None
+            and old_skill != description
+            and hashlib.sha256(old_skill.encode()).hexdigest() != original_digest
+        ):
             raise ValueError(f"Existing skill differs at {skill}. Move it aside or merge your copy.")
+        if guide.exists() and guide.read_text("utf-8") != rendering:
+            raise ValueError(f"Existing rendering guide differs at {guide}")
+        if (
+            profile == "paper"
+            and not claude
+            and any(data.get("features", {}).get(k) is False for k in ("hooks", "codex_hooks"))
+        ):
+            raise ValueError(f"Hooks are explicitly disabled in {config}")
+        updated_hooks = profile_settings(hook_path, project, profile) if profile else None
         if old is None:
             section["vibevideo"] = entry
             encoded = json.dumps(data, ensure_ascii=False, indent=2) + "\n" if claude else tomlkit.dumps(data)
             replace_text(config, encoded)
-        if not skill.exists():
+        if old_skill != description:
             replace_text(skill, description)
+        if not guide.exists():
+            replace_text(guide, rendering)
+        if updated_hooks is not None:
+            replace_text(hook_path, updated_hooks)
     finally:
         os.close(fd)
     print(f"Project MCP config: {config}\nProduction skill: {skill}")
@@ -88,6 +132,11 @@ def main():
     run.add_argument("--workspace", type=Path, default=Path.cwd())
     setup = subs.add_parser("install", help="Register the MCP server and install its workflow skill")
     setup.add_argument("client", choices=["claude", "codex"])
+    setup.add_argument(
+        "--profile",
+        choices=["standard", "paper"],
+        help="Enable the paper PreToolUse hook or remove it with standard. Omit to preserve the current setting.",
+    )
     setup.add_argument("--project", type=Path, default=Path.cwd())
     subs.add_parser("doctor", help="Check local tools and perception settings without network access")
     args = parser.parse_args()
@@ -97,7 +146,7 @@ def main():
 
             serve(args.workspace)
         elif args.command == "install":
-            install(args.client, args.project)
+            install(args.client, args.project, args.profile)
         else:
             return doctor()
     except (OSError, ValueError, TypeError, AttributeError) as exc:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vibevideo-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Evidence-guided video production tools for coding agents"
 readme = "README.md"
 license = "MIT"
@@ -21,4 +21,4 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools.package-data]
-vibevideo_mcp = ["skills/vibevideo/SKILL.md"]
+vibevideo_mcp = ["skills/vibevideo/SKILL.md", "skills/vibevideo/references/rendering.md"]
