@@ -167,6 +167,34 @@ class ReleaseTests(unittest.TestCase):
             self.assertFalse(rejected["spec_checks"]["width"])
             self.assertFalse(rejected["accepted"])
 
+    def test_silence_without_container_duration(self):
+        from vibevideo_mcp import media_service
+
+        with tempfile.TemporaryDirectory() as folder:
+            workspace = Path(folder)
+            subprocess.run(
+                ["ffmpeg", "-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                 "anullsrc=r=16000:cl=mono", "-t", "1", "silent.wav"],
+                cwd=workspace,
+                check=True,
+            )
+            project = Project(workspace)
+            task = project.call("plan_production", PLAN)["task_id"]
+            real = media_service.streams
+
+            def no_format_duration(path, timeout):
+                info = real(path, timeout)
+                info["format"].pop("duration", None)
+                return info
+
+            with patch.object(media_service, "streams", no_format_duration):
+                probed = project.call(
+                    "probe_media", {"task_id": task, "path": "silent.wav", "measurements": ["silence"]}
+                )
+            self.assertIsNone(probed["duration_seconds"])
+            interval = probed["silence"]["intervals"][-1]
+            self.assertAlmostEqual(interval[1], 1.0, places=2)
+
     def test_stdio_production(self):
         with tempfile.TemporaryDirectory() as folder, ThreadingHTTPServer(("127.0.0.1", 0), Fixture) as http:
             http.calls, http.fail = [], False

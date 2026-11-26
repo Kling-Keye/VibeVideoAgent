@@ -528,6 +528,15 @@ class MediaService(ProductionService):
                         intervals.append([start, float(value)])
                         start = None
                 if start is not None:
-                    intervals.append([start, float(result["duration_seconds"])])
+                    # Some containers (raw streams, fragmented files) omit format duration.
+                    end = result["duration_seconds"]
+                    if end is None:
+                        known = [
+                            float(s["duration"])
+                            for s in info["streams"]
+                            if s.get("duration") not in (None, "N/A")
+                        ]
+                        end = max(known) if known else None
+                    intervals.append([start, end])
                 result[metric] = {"threshold_db": -50, "minimum_seconds": 0.25, "intervals": intervals}
         return result
